@@ -1,0 +1,258 @@
+--  VERTIQ INDICADORES — DATA WAREHOUSE SCHEMA
+--  Banco: MySQL 8.0+
+--  Charset: utf8mb4 (suporta acentos e emojis)
+
+CREATE DATABASE vertiq_indicadores
+    CHARACTER SET utf8mb4
+    COLLATE utf8mb4_unicode_ci;
+ 
+USE vertiq_indicadores;
+
+
+-- 1. DIMENSÃO ASSESSORES
+
+
+CREATE TABLE dim_assessores (
+    id_assessor INT NOT NULL AUTO_INCREMENT,
+    nome VARCHAR(120) NOT NULL,
+    posicao VARCHAR(80) NULL,
+    range_aum VARCHAR(30) NULL,
+    ativo TINYINT(1) NOT NULL DEFAULT 1,
+    criado_em DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    atualizado_em DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+					      ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (id_assessor),
+    UNIQUE KEY uq_dim_assessores_nome (nome)
+) ENGINE=InnoDB
+  DEFAULT CHARSET=utf8mb4
+  COMMENT='Cadastro mestre de assessores. Essa dimensão, nunca sofre DELETE total — apenas UPSERT.';
+ 
+ 
+-- 2. LOG DE EXECUÇÃO DO ETL
+
+
+CREATE TABLE etl_log (
+    id_log INT NOT NULL AUTO_INCREMENT,
+    tabela VARCHAR(60) NOT NULL,
+    data_referencia  DATE NOT NULL,
+    arquivo_origem   TEXT NULL,
+    linhas_deletadas INT NOT NULL DEFAULT 0,
+    linhas_inseridas INT NOT NULL DEFAULT 0,
+    status_atual VARCHAR(20)  NOT NULL DEFAULT 'SUCESSO',
+    mensagem TEXT NULL,
+    executado_em DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (id_log)
+) ENGINE=InnoDB
+  DEFAULT CHARSET=utf8mb4
+  COMMENT='Essa parte do banco funciona como uma Rastreabilidade de cada execução do pipeline ETL.';
+ 
+ 
+-- 3. VISÃO GERAL — PRODUTOS
+
+
+CREATE TABLE tb_visao_produtos (
+    id_produto INT NOT NULL AUTO_INCREMENT,
+    data_referencia DATE NOT NULL,
+    produto VARCHAR(120) NOT NULL,
+    realizado DECIMAL(18,4) NULL,
+    objetivo DECIMAL(18,4) NULL,
+    carregado_em DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (id_produto),
+    UNIQUE KEY uq_visao_produtos (data_referencia, produto),
+    INDEX idx_visao_produtos_ref (data_referencia)
+) ENGINE=InnoDB
+  DEFAULT CHARSET=utf8mb4
+  COMMENT='Essa define a Receita realizada e objetivo por produto financeiro.';
+ 
+ 
+
+-- 4. RECEITA POR ASSESSOR (detalhamento por produto)
+
+
+CREATE TABLE tb_assessores_receita (
+    id_receita INT NOT NULL AUTO_INCREMENT,
+    data_referencia DATE NOT NULL,
+    assessor VARCHAR(120) NOT NULL,
+    rf DECIMAL(18,4) NULL,
+    rv_corretagem DECIMAL(18,4) NULL,
+    rv_btc DECIMAL(18,4) NULL,
+    rv_estruturados DECIMAL(18,4) NULL,
+    internacional_xp DECIMAL(18,4) NULL,
+    balcao_fundos DECIMAL(18,4) NULL,
+    cambio_xp DECIMAL(18,4) NULL,
+    coe DECIMAL(18,4) NULL,
+    pj2 DECIMAL(18,4) NULL,
+    receita_total DECIMAL(18,4) NULL,
+    objetivo DECIMAL(18,4) NULL,
+    consorcios DECIMAL(18,4) NULL,
+    seguros DECIMAL(18,4) NULL,
+    carregado_em DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (id_receita),
+    UNIQUE KEY uq_assessores_receita (data_referencia, assessor),
+    INDEX idx_assessores_receita_ref (data_referencia),
+    INDEX idx_assessores_receita_assessor (assessor)
+) ENGINE=InnoDB
+  DEFAULT CHARSET=utf8mb4
+  COMMENT='Essa detalha a Receita detalhada por assessor e tipo de produto no mês vendido por assessor.';
+ 
+ 
+
+-- 5. CAPTAÇÃO LÍQUIDA E AuM
+
+
+
+CREATE TABLE tb_captacao_liquida (
+    id_cap INT NOT NULL AUTO_INCREMENT,
+    data_referencia DATE NOT NULL,
+    assessor VARCHAR(120) NOT NULL,
+    posicao VARCHAR(80) NULL,
+    range_aum VARCHAR(30) NULL,
+    objetivo_cap_liq DECIMAL(18,4) NULL,
+    captacao_liquida DECIMAL(18,4) NULL,
+    aum DECIMAL(20,4) NULL,
+    ativacoes INT NULL,
+    habilitacoes INT NULL,
+    carregado_em DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (id_cap),
+    UNIQUE KEY uq_captacao_liquida (data_referencia, assessor),
+    INDEX idx_captacao_liquida_ref (data_referencia)
+) ENGINE=InnoDB
+  DEFAULT CHARSET=utf8mb4
+  COMMENT='Captação líquida, AuM e metas por assessor no mês.';
+ 
+ 
+
+-- 6. CONSÓRCIO
+
+
+
+CREATE TABLE tb_consorcio (
+    id_consorcio INT NOT NULL AUTO_INCREMENT,
+    data_referencia DATE NOT NULL,
+    assessor VARCHAR(120) NOT NULL,
+    reunioes_realizadas INT NULL,
+    pipe_por_assessor DECIMAL(18,4) NULL,
+    convertidas DECIMAL(18,4) NULL,
+    pipeline DECIMAL(18,4) NULL,
+    vendido DECIMAL(18,4) NULL,
+    receita_atual DECIMAL(18,4) NULL,
+    objetivo DECIMAL(18,4) NULL,
+    receita_projetada DECIMAL(18,4) NULL,
+    carregado_em DATETIME  NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (id_consorcio),
+    UNIQUE KEY uq_consorcio (data_referencia, assessor),
+    INDEX idx_consorcio_ref (data_referencia)
+) ENGINE=InnoDB
+  DEFAULT CHARSET=utf8mb4
+  COMMENT='Pipeline e receita de consórcio por assessor no mês.';
+ 
+ 
+
+-- 7. SEGUROS
+
+
+
+CREATE TABLE tb_seguros (
+    id_seguros INT NOT NULL AUTO_INCREMENT,
+    data_referencia DATE NOT NULL,
+    assessor VARCHAR(120) NOT NULL,
+    reunioes_realizadas INT NULL,
+    pipeline DECIMAL(18,4) NULL,
+    convertidos DECIMAL(18,4) NULL,
+    vendido DECIMAL(18,4) NULL,
+    receita_atual DECIMAL(18,4) NULL,
+    objetivo DECIMAL(18,4) NULL,
+    receita_projetada DECIMAL(18,4) NULL,
+    carregado_em DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (id_seguros),
+    UNIQUE KEY uq_seguros (data_referencia, assessor),
+    INDEX idx_seguros_ref (data_referencia)
+) ENGINE=InnoDB
+  DEFAULT CHARSET=utf8mb4
+  COMMENT='Pipeline e receita de seguros por assessor no mês.';
+ 
+ 
+
+-- 8. ADVISOR
+
+
+CREATE TABLE tb_advisor (
+    id_advisor INT NOT NULL AUTO_INCREMENT,
+    data_referencia DATE NOT NULL,
+    assessor VARCHAR(120) NOT NULL,
+    reunioes_realizadas INT NULL,
+    convertidos INT NULL,
+    receita_realizada DECIMAL(18,4) NULL,
+    captacao_realizada DECIMAL(18,4) NULL,
+    captacao_possivel DECIMAL(18,4) NULL,
+    carregado_em DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (id_advisor),
+    UNIQUE KEY uq_advisor (data_referencia, assessor),
+    INDEX idx_advisor_ref (data_referencia)
+) ENGINE=InnoDB
+  DEFAULT CHARSET=utf8mb4
+  COMMENT='Produção de serviços Advisor por assessor no mês.';
+  
+select * from dim_assessores;
+select * from tb_visao_produtos;
+
+
+ 
+USE vertiq_indicadores;
+SHOW TABLES;
+
+select * from tb_seguros;
+select * from tb_assessores_receita;
+
+
+INSERT INTO dim_assessores (nome, posicao, range_aum) VALUES
+('Guilherme Rocha',  'AAI Senior',   'Acima de 40 MM'),
+('W. Marques',       'AAI Senior',   'Acima de 40 MM'),
+('Marisa Regina',    'AAI Senior',   'Acima de 40 MM'),
+('Eduardo Mansur',   'Sales Hunter', '0 - 10 MM'),
+('Fernando José',    'AAI Pleno',    '20 - 40 MM'),
+('Cintia Campos',    'AAI Pleno',    '20 - 40 MM'),
+('Fernando Elias',   'AAI Pleno',    '20 - 40 MM'),
+('Enzo Rocha',       'Sales Hunter', '0 - 10 MM'),
+('Leonardo Roger',   'Sales Hunter', '0 - 10 MM'),
+('Felipe Nogueira',  'Sales Hunter', '0 - 10 MM'),
+('Carlos Eduardo',   'Sales Hunter', '0 - 10 MM'),
+('Maciel Ribeiro',   'Sales Hunter', '0 - 10 MM'),
+('Vértiq Digital',   'Sales Hunter', '0 - 10 MM');
+
+update dim_assessores set ativo = 0 where nome = "Cintia Campos";
+
+select * from dim_assessores;
+
+insert into dim_assessores (nome, posicao, range_aum) values ("Paulo Minehira", 'AAI Pleno', '20 - 40');
+
+update dim_assessores set ativo = 0 where nome = 'Paulo Minehira';
+ 
+select * from tb_assessores_receita where data_referencia = '2026-03-31';
+
+use vertiq_indicadores;															
+
+select * from tb_captacao_liquida where data_referencia = '2026-03-30';
+
+select assessor, receita_total from tb_assessores_receita where data_referencia = '2026-04-08';
+
+select * from dim_assessores;
+select * from tb_visao_produtos;
+call dim_assessores;
+show tables;
+
+select sum(objetivo) from tb_assessores_receita where data_referencia = '2026-03-31';
+
+update tb_assessores_receita set pj2 = '16875.83' where assessor = 'Marisa Regina' and data_referencia = '2026-03-31';
+
+select * from tb_advisor;
+select sum(captacao_liquida)
+ from tb_captacao_liquida where data_referencia = '2026-04-08';
+ 
+use vertiq_indicadores;
+
+select sum(receita_total) from tb_assessores_receita where data_referencia= '2026-04-15';
+
+select sum(captacao_liquida) from tb_captacao_liquida where data_referencia = '2026-04-15';
+
+select * from tb_assessores_receita where data_referencia = '2026-04-16';
