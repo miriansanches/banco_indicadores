@@ -193,66 +193,8 @@ CREATE TABLE tb_advisor (
   DEFAULT CHARSET=utf8mb4
   COMMENT='Produção de serviços Advisor por assessor no mês.';
   
-select * from dim_assessores;
-select * from tb_visao_produtos;
 
 
  
 USE vertiq_indicadores;
 SHOW TABLES;
-
-select * from tb_seguros;
-select * from tb_assessores_receita;
-
-
-INSERT INTO dim_assessores (nome, posicao, range_aum) VALUES
-('Guilherme Rocha',  'AAI Senior',   'Acima de 40 MM'),
-('W. Marques',       'AAI Senior',   'Acima de 40 MM'),
-('Marisa Regina',    'AAI Senior',   'Acima de 40 MM'),
-('Eduardo Mansur',   'Sales Hunter', '0 - 10 MM'),
-('Fernando José',    'AAI Pleno',    '20 - 40 MM'),
-('Cintia Campos',    'AAI Pleno',    '20 - 40 MM'),
-('Fernando Elias',   'AAI Pleno',    '20 - 40 MM'),
-('Enzo Rocha',       'Sales Hunter', '0 - 10 MM'),
-('Leonardo Roger',   'Sales Hunter', '0 - 10 MM'),
-('Felipe Nogueira',  'Sales Hunter', '0 - 10 MM'),
-('Carlos Eduardo',   'Sales Hunter', '0 - 10 MM'),
-('Maciel Ribeiro',   'Sales Hunter', '0 - 10 MM'),
-('Vértiq Digital',   'Sales Hunter', '0 - 10 MM');
-
-update dim_assessores set ativo = 0 where nome = "Cintia Campos";
-
-select * from dim_assessores;
-
-insert into dim_assessores (nome, posicao, range_aum) values ("Paulo Minehira", 'AAI Pleno', '20 - 40');
-
-update dim_assessores set ativo = 0 where nome = 'Paulo Minehira';
- 
-select * from tb_assessores_receita where data_referencia = '2026-03-31';
-
-use vertiq_indicadores;															
-
-select * from tb_captacao_liquida where data_referencia = '2026-03-30';
-
-select assessor, receita_total from tb_assessores_receita where data_referencia = '2026-04-08';
-
-select * from dim_assessores;
-select * from tb_visao_produtos;
-call dim_assessores;
-show tables;
-
-select sum(objetivo) from tb_assessores_receita where data_referencia = '2026-03-31';
-
-update tb_assessores_receita set pj2 = '16875.83' where assessor = 'Marisa Regina' and data_referencia = '2026-03-31';
-
-select * from tb_advisor;
-select sum(captacao_liquida)
- from tb_captacao_liquida where data_referencia = '2026-04-08';
- 
-use vertiq_indicadores;
-
-select sum(receita_total) from tb_assessores_receita where data_referencia= '2026-04-15';
-
-select sum(captacao_liquida) from tb_captacao_liquida where data_referencia = '2026-04-15';
-
-select * from tb_assessores_receita where data_referencia = '2026-04-16';
